@@ -281,6 +281,39 @@ func (r *RedisSession) GetHashMultipleSet(key string, rest ...interface{}) ([]in
 	return redis.Values(r.Do("HMGET", prefixedReq...))
 }
 
+// AddSetMembers adds given elements to the set stored at key. Given elements
+// that are already included in set are ignored.
+// Returns successfully added key count and error state
+func (r *RedisSession) AddSetMembers(key string, rest ...interface{}) (int, error) {
+	prefixedReq := r.prepareArgsWithKey(key, rest...)
+
+	reply, err := redis.Int(r.Do("SADD", prefixedReq...))
+	if err != nil {
+		return 0, err
+	}
+
+	return reply, nil
+}
+
+// RemoveSetMembers removes given elements from the set stored at key
+// Returns successfully removed key count and error state
+func (r *RedisSession) RemoveSetMembers(key string, rest ...interface{}) (int, error) {
+	prefixedReq := r.prepareArgsWithKey(key, rest...)
+
+	reply, err := redis.Int(r.Do("SREM", prefixedReq...))
+	if err != nil {
+		return 0, err
+	}
+
+	return reply, nil
+}
+
+// GetSetMembers returns all members included in the set at key
+// Returns members array and error state
+func (r *RedisSession) GetSetMembers(key string) ([]interface{}, error) {
+	return redis.Values(r.Do("SMEMBERS", r.addPrefix(key)))
+}
+
 // prepareArgsWithKey helper method prepends key to given variadic parameter
 func (r *RedisSession) prepareArgsWithKey(key string, rest ...interface{}) []interface{} {
 	prefixedReq := make([]interface{}, len(rest)+1)

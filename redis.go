@@ -314,6 +314,26 @@ func (r *RedisSession) GetSetMembers(key string) ([]interface{}, error) {
 	return redis.Values(r.Do("SMEMBERS", r.addPrefix(key)))
 }
 
+// Bool converts the given value to boolean
+func (r *RedisSession) Bool(reply interface{}) (bool, error) {
+	return redis.Bool(reply, nil)
+}
+
+// Int converts the given value to integer
+func (r *RedisSession) Int(reply interface{}) (int, error) {
+	return redis.Int(reply, nil)
+}
+
+// String converts the given value to string
+func (r *RedisSession) String(reply interface{}) (string, error) {
+	return redis.String(reply, nil)
+}
+
+// Int64 converts the given value to 64 bit integer
+func (r *RedisSession) Int64(reply interface{}) (int64, error) {
+	return redis.Int64(reply, nil)
+}
+
 // prepareArgsWithKey helper method prepends key to given variadic parameter
 func (r *RedisSession) prepareArgsWithKey(key string, rest ...interface{}) []interface{} {
 	prefixedReq := make([]interface{}, len(rest)+1)

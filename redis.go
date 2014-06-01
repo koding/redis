@@ -199,7 +199,6 @@ func (r *RedisSession) Setex(key string, timeout time.Duration, item interface{}
 
 	if reply != "OK" {
 		return fmt.Errorf("reply string is wrong!: %s", reply)
-
 	}
 
 	return nil

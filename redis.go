@@ -61,7 +61,7 @@ func (r *RedisSession) SetPrefix(name string) {
 	r.prefix = name + ":"
 }
 
-func (r *RedisSession) addPrefix(name string) string {
+func (r *RedisSession) AddPrefix(name string) string {
 	return r.prefix + name
 }
 
@@ -90,7 +90,7 @@ func (r *RedisSession) Send(cmd string, args ...interface{}) error {
 // overwritten, regardless of its type. A return of nil means successfull.
 // Example usage: redis.Set("arslan:name", "fatih")
 func (r *RedisSession) Set(key, value string) error {
-	reply, err := r.Do("SET", r.addPrefix(key), value)
+	reply, err := r.Do("SET", r.AddPrefix(key), value)
 	if err != nil {
 		return err
 	}
@@ -105,7 +105,7 @@ func (r *RedisSession) Set(key, value string) error {
 // Get is used to get the value of key. If the key does not exist an empty
 // string is returned. Usage: redis.Get("arslan")
 func (r *RedisSession) Get(key string) (string, error) {
-	reply, err := redis.String(r.Do("GET", r.addPrefix(key)))
+	reply, err := redis.String(r.Do("GET", r.AddPrefix(key)))
 	if err != nil {
 		return "", err
 	}
@@ -116,7 +116,7 @@ func (r *RedisSession) Get(key string) (string, error) {
 // the stored value is a non-integer, zero is returned. Example usage:
 // redis.GetInt("counter")
 func (r *RedisSession) GetInt(key string) (int, error) {
-	reply, err := redis.Int(r.Do("GET", r.addPrefix(key)))
+	reply, err := redis.Int(r.Do("GET", r.AddPrefix(key)))
 	if err != nil {
 		return 0, err
 	}
@@ -130,7 +130,7 @@ func (r *RedisSession) GetInt(key string) (int, error) {
 func (r *RedisSession) Del(args ...interface{}) (int, error) {
 	prefixed := make([]interface{}, 0)
 	for _, arg := range args {
-		prefixed = append(prefixed, r.addPrefix(arg.(string)))
+		prefixed = append(prefixed, r.AddPrefix(arg.(string)))
 	}
 
 	reply, err := redis.Int(r.Do("DEL", prefixed...))
@@ -145,7 +145,7 @@ func (r *RedisSession) Del(args ...interface{}) (int, error) {
 // key contains a value of the wrong type or contains a string that can not be
 // represented as integer
 func (r *RedisSession) Incr(key string) (int, error) {
-	reply, err := redis.Int(r.Do("INCR", r.addPrefix(key)))
+	reply, err := redis.Int(r.Do("INCR", r.AddPrefix(key)))
 	if err != nil {
 		return 0, err
 	}
@@ -158,7 +158,7 @@ func (r *RedisSession) Incr(key string) (int, error) {
 // set will update the expire value.
 func (r *RedisSession) Expire(key string, timeout time.Duration) error {
 	seconds := strconv.Itoa(int(timeout.Seconds()))
-	reply, err := redis.Int(r.Do("EXPIRE", r.addPrefix(key), seconds))
+	reply, err := redis.Int(r.Do("EXPIRE", r.AddPrefix(key), seconds))
 	if err != nil {
 		return err
 	}
@@ -173,7 +173,7 @@ func (r *RedisSession) Expire(key string, timeout time.Duration) error {
 // Exists returns true if key exists or false if not.
 func (r *RedisSession) Exists(key string) bool {
 	// does not have any err message to be checked, it return either 1 or 0
-	reply, _ := redis.Int(r.Do("EXISTS", r.addPrefix(key)))
+	reply, _ := redis.Int(r.Do("EXISTS", r.AddPrefix(key)))
 
 	if reply == 1 {
 		return true
@@ -216,7 +216,7 @@ func (r *RedisSession) Scard(key string) (int, error) {
 func (r *RedisSession) SortedSetIncrBy(key string, incrBy, item interface{}) (float64, error) {
 	prefixed := make([]interface{}, 0)
 	// add key
-	prefixed = append(prefixed, r.addPrefix(key))
+	prefixed = append(prefixed, r.AddPrefix(key))
 
 	// add incrBy
 	prefixed = append(prefixed, incrBy)
@@ -240,7 +240,7 @@ func (r *RedisSession) SortedSetReverseRange(key string, rest ...interface{}) ([
 	prefixedReq := make([]interface{}, len(rest)+1)
 
 	// prepend prefixed key
-	prefixedReq[0] = r.addPrefix(key)
+	prefixedReq[0] = r.AddPrefix(key)
 
 	for key, el := range rest {
 		prefixedReq[key+1] = el

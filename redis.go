@@ -50,6 +50,11 @@ func NewRedisSession(conf *RedisConf) (*RedisSession, error) {
 	return s, nil
 }
 
+// Pool Returns the connection pool for redis
+func (r *RedisSession) Pool() *redis.Pool {
+	return r.pool
+}
+
 // Close closes the connection pool for redis
 func (r *RedisSession) Close() error {
 	return r.pool.Close()

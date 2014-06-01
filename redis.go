@@ -298,7 +298,6 @@ func (r *RedisSession) HashMultipleSet(key string, item map[string]interface{}) 
 
 	if reply != "OK" {
 		return fmt.Errorf("reply string is wrong!: %s", reply)
-
 	}
 
 	return nil

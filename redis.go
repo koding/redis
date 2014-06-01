@@ -205,6 +205,11 @@ func (r *RedisSession) Setex(key string, timeout time.Duration, item interface{}
 	return nil
 }
 
+// PubSubConn wraps a Conn with convenience methods for subscribers.
+func (r *RedisSession) CreatePubSubConn() *redis.PubSubConn {
+	return &redis.PubSubConn{Conn: r.pool.Get()}
+}
+
 // Exists returns true if key exists or false if not.
 func (r *RedisSession) Exists(key string) bool {
 	// does not have any err message to be checked, it return either 1 or 0

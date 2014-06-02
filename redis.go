@@ -291,7 +291,7 @@ func (r *RedisSession) SortedSetReverseRange(key string, rest ...interface{}) ([
 // HashMultipleSet sets multiple hashset elements stored at key with given field values.
 // Returns error state of this operation
 func (r *RedisSession) HashMultipleSet(key string, item map[string]interface{}) error {
-	reply, err := r.Do("HMSET", redigo.Args(r.AddPrefix(key)).AddFlat(item)...)
+	reply, err := r.Do("HMSET", redis.Args(r.AddPrefix(key)).AddFlat(item)...)
 	if err != nil {
 		return err
 	}

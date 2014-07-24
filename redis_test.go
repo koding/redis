@@ -201,6 +201,24 @@ func TestRemoveSetMembers(t *testing.T) {
 	}
 }
 
+func TestIsSetMember(t *testing.T) {
+	response, err := session.IsSetMember("electricmayhem", "statler")
+	if err != nil {
+		t.Errorf("Could not check member existence: %s", err)
+	}
+	if response != 0 {
+		t.Errorf("Expected 0 but got %d", response)
+	}
+
+	response, err = session.IsSetMember("electricmayhem", "animal")
+	if err != nil {
+		t.Errorf("Could not check member existence: %s", err)
+	}
+	if response != 1 {
+		t.Errorf("Expected 1 but got %d", response)
+	}
+}
+
 func TestPopSetMember(t *testing.T) {
 	response, err := session.PopSetMember("electricmayhem")
 	if err != nil {

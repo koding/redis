@@ -351,6 +351,18 @@ func (r *RedisSession) PopSetMember(key string) (string, error) {
 	return redis.String(r.Do("SPOP", r.AddPrefix(key)))
 }
 
+// IsSetMember checks existence of a member set
+func (r *RedisSession) IsSetMember(key string, value string) (int, error) {
+	prefixedReq := r.prepareArgsWithKey(key, value)
+
+	reply, err := redis.Int(r.Do("SISMEMBER", prefixedReq...))
+	if err != nil {
+		return 0, err
+	}
+
+	return reply, nil
+}
+
 // SortBy sorts elements stored at key with given weight and order(ASC|DESC)
 //
 // i.e. Suppose we have elements stored at key as object_1, object_2 and object_3

@@ -71,6 +71,21 @@ func TestKeyIntValue(t *testing.T) {
 	if response != 6 {
 		t.Error("Value did not match: %s received", response)
 	}
+
+	err = session.Set("bertsfavouriteletter", "a")
+	if err != nil {
+		t.Errorf("Could not set value of key: %s", err)
+	}
+
+	response, err = session.GetInt("bertsfavouriteletter")
+	if err == nil {
+		t.Errorf("Error was expected: %s", err)
+	}
+	if response != 0 {
+		t.Error("0 was expected as response, but got %d", response)
+	}
+
+	session.Del("bertsfavouriteletter")
 }
 
 func TestDeleteKey(t *testing.T) {

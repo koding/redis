@@ -302,6 +302,12 @@ func (r *RedisSession) GetHashMultipleSet(key string, rest ...interface{}) ([]in
 	return redis.Values(r.Do("HMGET", prefixedReq...))
 }
 
+// HashGetAll returns all of the fields of a hash value
+// Usage: HashGetAll(key)
+func (r *RedisSession) HashGetAll(key string) ([]interface{}, error) {
+	return redis.Values(r.Do("HGETALL", r.AddPrefix(key)))
+}
+
 // AddSetMembers adds given elements to the set stored at key. Given elements
 // that are already included in set are ignored.
 // Returns successfully added key count and error state

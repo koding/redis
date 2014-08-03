@@ -337,6 +337,11 @@ func (r *RedisSession) IsSetMember(key string, value string) (int, error) {
 	return redis.Int(r.Do("SISMEMBER", prefixedReq...))
 }
 
+// RandomSetMember returns random from set, but not removes unline PopSetMember
+func (r *RedisSession) RandomSetMember(key string) (string, error) {
+	return redis.String(r.Do("SRANDMEMBER", r.AddPrefix(key)))
+}
+
 // SortBy sorts elements stored at key with given weight and order(ASC|DESC)
 //
 // i.e. Suppose we have elements stored at key as object_1, object_2 and object_3

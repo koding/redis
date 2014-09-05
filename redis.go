@@ -416,3 +416,37 @@ func (r *RedisSession) prepareArgsWithKey(key string, rest ...interface{}) []int
 
 	return prefixedReq
 }
+
+type SortedSetUnionArgs struct {
+	Destination string
+	Keys        []interface{}
+	Weights     []interface{}
+	Aggregate   string
+}
+
+func (r *RedisSession) SortedSetsUnion(opts SortedSetUnionArgs) (int64, error) {
+	if opts.Destination == "" {
+		return 0, errors.New("no destination to store")
+	}
+
+	lengthOfKeys := len(opts.Keys)
+	if lengthOfKeys == 0 {
+		return 0, errors.New("no keys")
+	}
+
+	prefixed := []interface{}{
+		r.AddPrefix(opts.Destination), lengthOfKeys,
+	}
+	prefixed = append(prefixed, opts.Keys...)
+
+	if len(opts.Weights) != 0 {
+		prefixed = append(prefixed, "WEIGHTS")
+		prefixed = append(prefixed, opts.Weights...)
+	}
+
+	if opts.Aggregate != "" {
+		prefixed = append(prefixed, "AGGREGATE", opts.Aggregate)
+	}
+
+	return redis.Int64(r.Do("ZUNIONSTORE", prefixed...))
+}

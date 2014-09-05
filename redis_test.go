@@ -303,3 +303,44 @@ func TestHashMultipleSet(t *testing.T) {
 	}
 	session.Del("mayhem")
 }
+
+func TestSortedSetsUnion(t *testing.T) {
+	set1Key, set2Key, destination := "set1", "set2", "combined-set"
+
+	_, err := session.SortedSetIncrBy(set1Key, 1, "item1")
+	if err != nil {
+		t.Errorf("Error creating set1", err)
+		return
+	}
+
+	_, err = session.SortedSetIncrBy(set2Key, 1, "item2")
+	if err != nil {
+		t.Errorf("Error creating set2", err)
+
+		session.Del(set1Key)
+		return
+	}
+
+	args := SortedSetUnionArgs{
+		Destination: destination,
+		Keys:        []interface{}{set1Key, set2Key},
+		Weights:     []interface{}{1, 1},
+		Aggregate:   "SUM",
+	}
+	reply, err := session.SortedSetsUnion(args)
+	if err != nil {
+		t.Errorf("Error creating combined sets", err)
+
+		session.Del(set1Key)
+		session.Del(set2Key)
+		return
+	}
+
+	if reply < 2 {
+		t.Errorf("Wrong number of elements added to combined set", err, reply)
+	}
+
+	session.Del(set1Key)
+	session.Del(set2Key)
+	session.Del(destination)
+}

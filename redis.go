@@ -327,6 +327,13 @@ func (r *RedisSession) HashSetIfNotExists(key, field string, item interface{}) (
 	return reply == 1, nil
 }
 
+// GetHashLength returns the item count of a hash set.
+func (r *RedisSession) GetHashLength(key string) int {
+	reply, _ := redis.Int(r.Do("HLEN", r.AddPrefix(key)))
+
+	return reply
+}
+
 // AddSetMembers adds given elements to the set stored at key. Given elements
 // that are already included in set are ignored.
 // Returns successfully added key count and error state

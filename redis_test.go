@@ -287,6 +287,11 @@ func TestHashMultipleSet(t *testing.T) {
 	}
 	defer session.Del("mayhem")
 
+	length := session.GetHashLength("mayhem")
+	if length != len(item) {
+		t.Errorf("Expected %d but got %d as hash length: ", len(item), length)
+	}
+
 	reply, err := session.GetHashMultipleSet("mayhem", "zoot")
 	if err != nil {
 		t.Errorf("Could not get hash set: %s", err)

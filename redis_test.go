@@ -285,15 +285,21 @@ func TestHashMultipleSet(t *testing.T) {
 		t.Errorf("Could create hash set: %s", err)
 		return
 	}
+	defer session.Del("mayhem")
+
+	length := session.GetHashLength("mayhem")
+	if length != len(item) {
+		t.Errorf("Expected %d but got %d as hash length: ", len(item), length)
+	}
+
 	reply, err := session.GetHashMultipleSet("mayhem", "zoot")
 	if err != nil {
 		t.Errorf("Could not get hash set: %s", err)
-		session.Del("mayhem")
 		return
 	}
+
 	if len(reply) != 1 {
 		t.Errorf("Wrong return value count: %d", len(reply))
-		session.Del("mayhem")
 		return
 	}
 
@@ -301,7 +307,24 @@ func TestHashMultipleSet(t *testing.T) {
 	if response != "sax" {
 		t.Errorf("Wrong hashset value of the element: %s", response)
 	}
-	session.Del("mayhem")
+
+	result, err := session.HashSetIfNotExists("mayhem", "janice", "ukulele")
+	if err != nil {
+		t.Errorf("Could not set hash field: %s", err)
+	}
+
+	if result != false {
+		t.Error("Expected false from hash set but got true")
+	}
+
+	result, err = session.HashSetIfNotExists("mayhem", "kermit", "frog")
+	if err != nil {
+		t.Errorf("Could not set hash field: %s", err)
+	}
+
+	if result != true {
+		t.Error("Expected true from hash set but got false")
+	}
 }
 
 func TestSortedSet(t *testing.T) {

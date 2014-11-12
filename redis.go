@@ -334,6 +334,14 @@ func (r *RedisSession) GetHashLength(key string) int {
 	return reply
 }
 
+// DeleteHashSetField deletes a given field from hash set and returns number
+// of deleted fields count
+func (r *RedisSession) DeleteHashSetField(key string, rest ...interface{}) (int, error) {
+	prefixedReq := r.prepareArgsWithKey(key, rest...)
+
+	return redis.Int(r.Do("HDEL", prefixedReq...))
+}
+
 // AddSetMembers adds given elements to the set stored at key. Given elements
 // that are already included in set are ignored.
 // Returns successfully added key count and error state

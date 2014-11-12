@@ -325,6 +325,20 @@ func TestHashMultipleSet(t *testing.T) {
 	if result != true {
 		t.Error("Expected true from hash set but got false")
 	}
+
+	deleteCount, err := session.DeleteHashSetField("mayhem", "kermit")
+	if err != nil {
+		t.Errorf("Could not delete hash field: %s", err)
+	}
+
+	if deleteCount != 1 {
+		t.Errorf("Expected 1 but got %d from hash set field deletion", deleteCount)
+	}
+
+	length = session.GetHashLength("mayhem")
+	if length != len(item) {
+		t.Errorf("Expected %d but got %d as hash length: ", len(item), length)
+	}
 }
 
 func TestSortedSet(t *testing.T) {

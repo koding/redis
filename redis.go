@@ -328,10 +328,8 @@ func (r *RedisSession) HashSetIfNotExists(key, field string, item interface{}) (
 }
 
 // GetHashLength returns the item count of a hash set.
-func (r *RedisSession) GetHashLength(key string) int {
-	reply, _ := redis.Int(r.Do("HLEN", r.AddPrefix(key)))
-
-	return reply
+func (r *RedisSession) GetHashLength(key string) (int, error) {
+	return redis.Int(r.Do("HLEN", r.AddPrefix(key)))
 }
 
 // DeleteHashSetField deletes a given field from hash set and returns number

@@ -287,7 +287,12 @@ func TestHashMultipleSet(t *testing.T) {
 	}
 	defer session.Del("mayhem")
 
-	length := session.GetHashLength("mayhem")
+	length, err := session.GetHashLength("mayhem")
+	if err != nil {
+		t.Errorf("Could not get hash set length: %s", err)
+		return
+	}
+
 	if length != len(item) {
 		t.Errorf("Expected %d but got %d as hash length: ", len(item), length)
 	}
@@ -335,7 +340,11 @@ func TestHashMultipleSet(t *testing.T) {
 		t.Errorf("Expected 1 but got %d from hash set field deletion", deleteCount)
 	}
 
-	length = session.GetHashLength("mayhem")
+	length, err = session.GetHashLength("mayhem")
+	if err != nil {
+		t.Errorf("Could not get hash set length: %s", err)
+	}
+
 	if length != len(item) {
 		t.Errorf("Expected %d but got %d as hash length: ", len(item), length)
 	}

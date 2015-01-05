@@ -506,3 +506,20 @@ func (r *RedisSession) SortedSetAddSingle(key, member string, score interface{})
 	_, err := r.Do("ZADD", r.AddPrefix(key), score, member)
 	return err
 }
+
+var (
+	NegativeInf = "-inf"
+	PositiveInf = "+inf"
+)
+
+// SortedSetRangebyScore key min max
+// returns all the elements in the sorted set at key with a score
+// between min and max.
+//
+// See: http://redis.io/commands/zrangebyscore
+func (r *RedisSession) SortedSetRangebyScore(key string, rest ...interface{}) ([]interface{}, error) {
+	prefixed := []interface{}{r.AddPrefix(key)}
+	prefixed = append(prefixed, rest...)
+
+	return redis.Values(r.Do("ZRANGEBYSCORE", prefixed...))
+}

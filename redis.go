@@ -19,7 +19,13 @@ type RedisConf struct {
 	DB     int
 }
 
-var ErrNil = redis.ErrNil
+var (
+	ErrNil               = redis.ErrNil
+	ErrTTLNotSet         = errors.New("ttl is not set")
+	ErrKeyNotExist       = errors.New("key does not exist")
+	ErrDestinationNotSet = errors.New("destination is not set")
+	ErrKeysNotSet        = errors.New("keys are not set")
+)
 
 func NewRedisSession(conf *RedisConf) (*RedisSession, error) {
 	s := &RedisSession{}
@@ -177,6 +183,25 @@ func (r *RedisSession) Expire(key string, timeout time.Duration) error {
 	}
 
 	return nil
+}
+
+// TTL returns remaining TTL value of the given key. An error is returned
+// when TTL is not existed or key is not found
+func (r *RedisSession) TTL(key string) (time.Duration, error) {
+	reply, err := redis.Int(r.Do("TTL", r.AddPrefix(key)))
+	if err != nil {
+		return 0, err
+	}
+
+	if reply == -1 {
+		return 0, ErrTTLNotSet
+	}
+
+	if reply == -2 {
+		return 0, ErrKeyNotExist
+	}
+
+	return time.Duration(reply) * time.Second, nil
 }
 
 // Set key to hold the string value and set key to timeout after a given
@@ -451,12 +476,12 @@ func (r *RedisSession) prepareArgsWithKey(key string, rest ...interface{}) []int
 // See: http://redis.io/commands/zunionstore
 func (r *RedisSession) SortedSetsUnion(destination string, keys []string, weights []interface{}, aggregate string) (int64, error) {
 	if destination == "" {
-		return 0, errors.New("no destination to store")
+		return 0, ErrDestinationNotSet
 	}
 
 	lengthOfKeys := len(keys)
 	if lengthOfKeys == 0 {
-		return 0, errors.New("no keys")
+		return 0, ErrKeysNotSet
 	}
 
 	prefixed := []interface{}{

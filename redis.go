@@ -33,7 +33,7 @@ func NewRedisSession(conf *RedisConf) (*RedisSession, error) {
 	pool := &redis.Pool{
 		MaxIdle:     3,
 		MaxActive:   1000,
-		IdleTimeout: 240 * time.Second,
+		IdleTimeout: 30 * time.Second,
 		Dial: func() (redis.Conn, error) {
 			c, err := redis.Dial("tcp", conf.Server)
 			if err != nil {
@@ -49,6 +49,10 @@ func NewRedisSession(conf *RedisConf) (*RedisSession, error) {
 			}
 
 			return c, err
+		},
+		TestOnBorrow: func(c redis.Conn, t time.Time) error {
+			_, err := c.Do("PING")
+			return err
 		},
 	}
 	s.pool = pool

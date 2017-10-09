@@ -9,11 +9,14 @@ import (
 	"github.com/garyburd/redigo/redis"
 )
 
+// RedisSession holds the internal redis pool and the prefix for command/key
+// namespacing among diff services/workers.
 type RedisSession struct {
 	pool   *redis.Pool
 	prefix string
 }
 
+// RedisConf is the struct for base redis configuration
 type RedisConf struct {
 	Server string
 	DB     int
@@ -238,7 +241,7 @@ func (r *RedisSession) Setex(key string, timeout time.Duration, item interface{}
 	return nil
 }
 
-// PubSubConn wraps a Conn with convenience methods for subscribers.
+// CreatePubSubConn wraps a Conn with convenience methods for subscribers.
 func (r *RedisSession) CreatePubSubConn() *redis.PubSubConn {
 	return &redis.PubSubConn{Conn: r.pool.Get()}
 }
@@ -248,11 +251,7 @@ func (r *RedisSession) Exists(key string) bool {
 	// does not have any err message to be checked, it return either 1 or 0
 	reply, _ := redis.Int(r.Do("EXISTS", r.AddPrefix(key)))
 
-	if reply == 1 {
-		return true
-	}
-
-	return false // means reply is 0, key does not exist
+	return reply == 1 // false means key does not exist
 }
 
 // Ping pings the redis server to check if it is alive or not

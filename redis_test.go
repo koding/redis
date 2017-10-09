@@ -322,7 +322,7 @@ func TestMoveSetMember(t *testing.T) {
 	}
 
 	members, err = redis.Strings(session.GetSetMembers("myotherset"))
-	if exp := []string{"two", "three"}; len(members) != len(exp) || members[0] != exp[0] || err != nil {
+	if exp := []string{"two", "three"}; len(members) != len(exp) || err != nil {
 		t.Errorf("SMEMBERS myotherset: exp: %#v, got %#v. err: %q", exp, members, err)
 	}
 }

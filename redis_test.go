@@ -52,7 +52,7 @@ func TestKeyValue(t *testing.T) {
 
 	response, err := session.Get("gonzo")
 	if err != nil {
-		t.Errorf("Could not get value of key ", err)
+		t.Errorf("Could not get value of key: %s", err)
 	}
 	if response != "the great" {
 		t.Error("Value did not match")
@@ -69,7 +69,7 @@ func TestKeyIntValue(t *testing.T) {
 		t.Errorf("Could not get value of key: %s", err)
 	}
 	if response != 6 {
-		t.Error("Value did not match: %s received", response)
+		t.Errorf("Value did not match: %d received", response)
 	}
 
 	err = session.Set("bertsfavouriteletter", "a")
@@ -82,7 +82,7 @@ func TestKeyIntValue(t *testing.T) {
 		t.Errorf("Error was expected: %s", err)
 	}
 	if response != 0 {
-		t.Error("0 was expected as response, but got %d", response)
+		t.Errorf("0 was expected as response, but got %d", response)
 	}
 
 	session.Del("bertsfavouriteletter")
@@ -151,7 +151,7 @@ func TestTTL(t *testing.T) {
 	}
 
 	if ttl.Seconds() > 1 || ttl.Seconds() < 0 {
-		t.Errorf("Expected TTL between 0 and 1 but got: %d", ttl.Seconds())
+		t.Errorf("Expected TTL between 0 and 1 but got: %f", ttl.Seconds())
 	}
 }
 
@@ -283,6 +283,50 @@ func TestPopSetMember(t *testing.T) {
 	}
 }
 
+func TestMoveSetMember(t *testing.T) {
+	// redis> SADD myset "one"
+	// (integer) 1
+	// redis> SADD myset "two"
+	// (integer) 1
+	// redis> SADD myotherset "three"
+	// (integer) 1
+	// redis> SMOVE myset myotherset "two"
+	// (integer) 1
+	// redis> SMEMBERS myset
+	// 1) "one"
+	// redis> SMEMBERS myotherset
+	// 1) "two"
+	// 2) "three"
+	// redis>
+
+	got, err := session.AddSetMembers("myset", "one", "two")
+	if exp := 2; got != exp {
+		t.Errorf("SADD myset one: exp: %d, got %d. err: %q", exp, got, err)
+	}
+	defer session.Del("myset")
+
+	got, err = session.AddSetMembers("myotherset", "three")
+	if exp := 1; got != exp {
+		t.Errorf("SADD myotherset three: exp: %d, got %d. err: %q", exp, got, err)
+	}
+	defer session.Del("myotherset")
+
+	got, err = session.MoveSetMember("myset", "myotherset", "two")
+	if exp := 1; got != exp {
+		t.Errorf("SMOVE myset myotherset two: exp: %d, got %d. err: %q", exp, got, err)
+	}
+
+	members, err := redis.Strings(session.GetSetMembers("myset"))
+	if exp := []string{"one"}; len(members) != len(exp) || members[0] != exp[0] || err != nil {
+		t.Errorf("SMEMBERS myset: exp: %#v, got %#v. err: %q", exp, members, err)
+	}
+
+	members, err = redis.Strings(session.GetSetMembers("myotherset"))
+	if exp := []string{"two", "three"}; len(members) != len(exp) || err != nil {
+		t.Errorf("SMEMBERS myotherset: exp: %#v, got %#v. err: %q", exp, members, err)
+	}
+}
+
 func TestKeys(t *testing.T) {
 	keys, err := session.Keys("*")
 	if err != nil {
@@ -377,7 +421,7 @@ func TestHashMultipleSet(t *testing.T) {
 		t.Errorf("Could not set hash field: %s", err)
 	}
 
-	if result != false {
+	if result {
 		t.Error("Expected false from hash set but got true")
 	}
 
@@ -386,7 +430,7 @@ func TestHashMultipleSet(t *testing.T) {
 		t.Errorf("Could not set hash field: %s", err)
 	}
 
-	if result != true {
+	if !result {
 		t.Error("Expected true from hash set but got false")
 	}
 
@@ -420,12 +464,12 @@ func TestSortedSet(t *testing.T) {
 
 	_, err := session.SortedSetIncrBy(set1Key, 1, "item1")
 	if err != nil {
-		t.Fatalf("Error creating set1", err)
+		t.Fatalf("Error creating set1: %s", err)
 	}
 
 	_, err = session.SortedSetIncrBy(set2Key, 1, "item2")
 	if err != nil {
-		t.Fatalf("Error creating set2", err)
+		t.Fatalf("Error creating set2: %s", err)
 	}
 
 	keys := []string{set1Key, set2Key}
@@ -433,11 +477,11 @@ func TestSortedSet(t *testing.T) {
 
 	reply, err := session.SortedSetsUnion(destination, keys, weights, "SUM")
 	if err != nil {
-		t.Fatalf("Error creating combined sets", err)
+		t.Fatalf("Error creating combined sets: %s", err)
 	}
 
 	if reply < 2 {
-		t.Fatalf("Wrong number of elements added to combined set", err, reply)
+		t.Fatalf("Wrong number of elements added to combined set: %s, %d", err, reply)
 	}
 
 	score, err := session.SortedSetScore(destination, "item1")
@@ -446,7 +490,7 @@ func TestSortedSet(t *testing.T) {
 	}
 
 	if score != 1 {
-		t.Fatalf("Wrong number of elements added to combined set", err, reply)
+		t.Fatalf("Wrong number of elements added to combined set: %s, %d", err, reply)
 	}
 
 	_, err = session.SortedSetRem(destination, "item1")

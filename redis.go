@@ -9,11 +9,14 @@ import (
 	"github.com/garyburd/redigo/redis"
 )
 
+// RedisSession holds the internal redis pool and the prefix for command/key
+// namespacing among diff services/workers.
 type RedisSession struct {
 	pool   *redis.Pool
 	prefix string
 }
 
+// RedisConf is the struct for base redis configuration
 type RedisConf struct {
 	Server string
 	DB     int
@@ -27,27 +30,28 @@ var (
 	ErrKeysNotSet        = errors.New("keys are not set")
 )
 
-func NewRedisSession(conf *RedisConf) (*RedisSession, error) {
+// NewRedisSession creates a new Redis Pool with optional Redis Dial configurations.
+func NewRedisSession(conf *RedisConf, options ...redis.DialOption) (*RedisSession, error) {
 	s := &RedisSession{}
+	if len(options) == 0 {
+		options = []redis.DialOption{
+			redis.DialReadTimeout(5 * time.Second),
+			redis.DialWriteTimeout(time.Second),
+			redis.DialConnectTimeout(time.Second),
+		}
+	}
+
+	options = append(options, redis.DialDatabase(conf.DB))
 
 	pool := &redis.Pool{
 		MaxIdle:     3,
 		MaxActive:   1000,
 		IdleTimeout: 30 * time.Second,
 		Dial: func() (redis.Conn, error) {
-			c, err := redis.Dial("tcp", conf.Server)
+			c, err := redis.Dial("tcp", conf.Server, options...)
 			if err != nil {
 				return nil, err
 			}
-
-			// default is 0 for redis
-			if conf.DB != 0 {
-				if _, err := c.Do("SELECT", conf.DB); err != nil {
-					c.Close()
-					return nil, err
-				}
-			}
-
 			return c, err
 		},
 		TestOnBorrow: func(c redis.Conn, t time.Time) error {
@@ -237,7 +241,7 @@ func (r *RedisSession) Setex(key string, timeout time.Duration, item interface{}
 	return nil
 }
 
-// PubSubConn wraps a Conn with convenience methods for subscribers.
+// CreatePubSubConn wraps a Conn with convenience methods for subscribers.
 func (r *RedisSession) CreatePubSubConn() *redis.PubSubConn {
 	return &redis.PubSubConn{Conn: r.pool.Get()}
 }
@@ -247,11 +251,7 @@ func (r *RedisSession) Exists(key string) bool {
 	// does not have any err message to be checked, it return either 1 or 0
 	reply, _ := redis.Int(r.Do("EXISTS", r.AddPrefix(key)))
 
-	if reply == 1 {
-		return true
-	}
-
-	return false // means reply is 0, key does not exist
+	return reply == 1 // false means key does not exist
 }
 
 // Ping pings the redis server to check if it is alive or not
@@ -418,6 +418,13 @@ func (r *RedisSession) IsSetMember(key string, value string) (int, error) {
 // RandomSetMember returns random from set, but not removes unline PopSetMember
 func (r *RedisSession) RandomSetMember(key string) (string, error) {
 	return redis.String(r.Do("SRANDMEMBER", r.AddPrefix(key)))
+}
+
+// SetMoveMember moves member from the set at source to the set at destination.
+// This operation is atomic. In every given moment the element will appear to be
+// a member of source or destination for other clients.
+func (r *RedisSession) MoveSetMember(source, destination, member string) (int, error) {
+	return redis.Int(r.Do("SMOVE", r.AddPrefix(source), r.AddPrefix(destination), member))
 }
 
 // SortBy sorts elements stored at key with given weight and order(ASC|DESC)

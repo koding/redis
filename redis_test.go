@@ -283,6 +283,50 @@ func TestPopSetMember(t *testing.T) {
 	}
 }
 
+func TestMoveSetMember(t *testing.T) {
+	// redis> SADD myset "one"
+	// (integer) 1
+	// redis> SADD myset "two"
+	// (integer) 1
+	// redis> SADD myotherset "three"
+	// (integer) 1
+	// redis> SMOVE myset myotherset "two"
+	// (integer) 1
+	// redis> SMEMBERS myset
+	// 1) "one"
+	// redis> SMEMBERS myotherset
+	// 1) "two"
+	// 2) "three"
+	// redis>
+
+	got, err := session.AddSetMembers("myset", "one", "two")
+	if exp := 2; got != exp {
+		t.Errorf("SADD myset one: exp: %d, got %d. err: %q", exp, got, err)
+	}
+	defer session.Del("myset")
+
+	got, err = session.AddSetMembers("myotherset", "three")
+	if exp := 1; got != exp {
+		t.Errorf("SADD myotherset three: exp: %d, got %d. err: %q", exp, got, err)
+	}
+	defer session.Del("myotherset")
+
+	got, err = session.MoveSetMember("myset", "myotherset", "two")
+	if exp := 1; got != exp {
+		t.Errorf("SMOVE myset myotherset two: exp: %d, got %d. err: %q", exp, got, err)
+	}
+
+	members, err := redis.Strings(session.GetSetMembers("myset"))
+	if exp := []string{"one"}; len(members) != len(exp) || members[0] != exp[0] || err != nil {
+		t.Errorf("SMEMBERS myset: exp: %#v, got %#v. err: %q", exp, members, err)
+	}
+
+	members, err = redis.Strings(session.GetSetMembers("myotherset"))
+	if exp := []string{"two", "three"}; len(members) != len(exp) || members[0] != exp[0] || err != nil {
+		t.Errorf("SMEMBERS myotherset: exp: %#v, got %#v. err: %q", exp, members, err)
+	}
+}
+
 func TestKeys(t *testing.T) {
 	keys, err := session.Keys("*")
 	if err != nil {

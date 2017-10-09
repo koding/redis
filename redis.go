@@ -420,6 +420,13 @@ func (r *RedisSession) RandomSetMember(key string) (string, error) {
 	return redis.String(r.Do("SRANDMEMBER", r.AddPrefix(key)))
 }
 
+// SetMoveMember moves member from the set at source to the set at destination.
+// This operation is atomic. In every given moment the element will appear to be
+// a member of source or destination for other clients.
+func (r *RedisSession) MoveSetMember(source, destination, member string) (int, error) {
+	return redis.Int(r.Do("SMOVE", r.AddPrefix(source), r.AddPrefix(destination), member))
+}
+
 // SortBy sorts elements stored at key with given weight and order(ASC|DESC)
 //
 // i.e. Suppose we have elements stored at key as object_1, object_2 and object_3
